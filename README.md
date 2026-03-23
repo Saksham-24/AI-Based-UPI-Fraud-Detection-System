@@ -11,7 +11,6 @@
 [![Status](https://img.shields.io/badge/Status-In%20Progress-yellow?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-*Minor Project | B.Tech CSE (AI & ML) | K.R. Mangalam University | Projexa Team ID: 26E3226*
 
 </div>
 
