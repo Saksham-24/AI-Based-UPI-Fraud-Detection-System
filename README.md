@@ -136,8 +136,8 @@ Real UPI transaction data is confidential and not publicly available. This proje
 | **Data Handling** | Pandas, NumPy |
 | **Machine Learning** | Scikit-learn, XGBoost |
 | **Visualization** | Matplotlib, Seaborn |
-| **Notebook** | Jupyter Notebook |
-| **Datasets** | Kaggle, PaySim |
+| **Notebook** | Jupyter Notebook , Visual Studio Code |
+| **Datasets** | Kaggle, PaySim , Synthetic Data Formation|
 
 ---
 
