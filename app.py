@@ -32,17 +32,17 @@ st.markdown("""
 st.markdown("<div class='title'>💳 Paytm UPI Fraud Detection Demo</div>", unsafe_allow_html=True)
 st.markdown("---")
 
-# Load dataset
+
 df = pd.DataFrame(np.random.rand(1000, 30), columns=[f"V{i}" for i in range(30)])
 df["Class"] = np.random.randint(0, 2, 1000)
 X = df.drop('Class', axis=1)
 y = df['Class']
 
-# Train model
+
 model = RandomForestClassifier(n_estimators=80)
 model.fit(X, y)
 
-# Layout
+
 col1, col2 = st.columns([2, 1])
 
 # LEFT SIDE (UPI UI)
