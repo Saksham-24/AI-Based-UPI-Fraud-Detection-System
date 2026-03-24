@@ -87,7 +87,7 @@ with col1:
 
         risk_score = min(risk_score, 1)
 
-        # Classification
+        
         if risk_score < 0.3:
             level = "🟢 LOW"
         elif risk_score < 0.7:
@@ -111,12 +111,12 @@ with col1:
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-# RIGHT SIDE (COOL GRAPH ONLY)
+
 with col2:
     st.markdown("<div class='card'>", unsafe_allow_html=True)
     st.subheader("📊 Fraud Insights")
 
-    # Simple graph
+    
     fraud_counts = df['Class'].value_counts()
 
     fig, ax = plt.subplots()
