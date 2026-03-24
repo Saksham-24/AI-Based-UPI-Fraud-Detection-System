@@ -4,10 +4,10 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 import matplotlib.pyplot as plt
 
-# Page setup
+
 st.set_page_config(page_title="UPI Fraud Detection", layout="wide")
 
-# Custom CSS (Paytm style)
+
 st.markdown("""
     <style>
     .main {
@@ -28,7 +28,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Header
+
 st.markdown("<div class='title'>💳 Paytm UPI Fraud Detection Demo</div>", unsafe_allow_html=True)
 st.markdown("---")
 
@@ -45,7 +45,7 @@ model.fit(X, y)
 
 col1, col2 = st.columns([2, 1])
 
-# LEFT SIDE (UPI UI)
+
 with col1:
     st.markdown("<div class='card'>", unsafe_allow_html=True)
     st.subheader("📲 Send Money")
@@ -67,14 +67,14 @@ with col1:
 
     if st.button("🚀 Pay Now"):
 
-        # Model input
+        
         features = list(np.zeros(28))
         input_data = [50000] + features + [amount]
         input_array = np.array(input_data).reshape(1, -1)
 
         prob = model.predict_proba(input_array)[0][1]
 
-        # Risk logic
+        
         risk_score = prob
         if txn_count > 10:
             risk_score += 0.2
