@@ -102,14 +102,14 @@ with col1:
         st.write(f"Risk Score: **{risk_score:.2f}**")
         st.write(f"Risk Level: {level}")
 
-        if risk_score > 0.7:
+        if risk_score > 0.7 :
             st.error("🚨 Payment Blocked: High Risk")
         elif risk_score > 0.3:
             st.warning("⚠️ Payment Pending Verification")
         else:
             st.success("✅ Payment Successful")
 
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>" , unsafe_allow_html=True)
 
 
 with col2:
