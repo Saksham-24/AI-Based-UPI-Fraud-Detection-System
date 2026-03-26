@@ -113,7 +113,7 @@ India processes **10 billion+ UPI transactions every month**. The moment a fraud
 Real UPI transaction data is confidential and not publicly available. This project uses:
 
 - **Kaggle Credit Card Fraud Dataset** — adapted for UPI-style transaction patterns
-- **PaySim** — A financial mobile money simulator that closely replicates mobile payment behaviour
+- **PaySim** :A financial mobile money simulator that closely replicates mobile payment behaviour
 - **Synthetic Data** — 10,000 UPI-style transactions generated with realistic distributions
 
 | Feature | Description |
