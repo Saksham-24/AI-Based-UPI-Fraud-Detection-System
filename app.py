@@ -89,7 +89,7 @@ with col1:
 
         
         if risk_score < 0.3:
-            level = "🟢 LOW"
+            level = "🟢 LOW Risk"
         elif risk_score < 0.7:
             level = "🟡 MEDIUM"
         else:
