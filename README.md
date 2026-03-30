@@ -20,7 +20,7 @@
 
 > **UPI fraud is a ₹2,000 Cr+ annual problem in India — and growing.**
 
-India processes **10 billion+ UPI transactions every month**. The moment a fraudulent transaction completes, the money is transferred **instantly and is nearly impossible to recover.** Fraudsters exploit this with phishing links, fake payment requests, and social engineering — and traditional rule-based detection systems simply can't keep up.
+India processes **10 billion+ UPI transactions every month**. The moment a fraudulent transaction completes, the money is transferred **instantly and is nearly impossible to recover.** Fraudsters exploit this with phishing links, fake payment requests, and social engineering — and traditional rule-based detection systems simply cant keep up.
 
 **The core issue with existing systems:**
 - ❌ Fixed rules that fraudsters easily learn to bypass
