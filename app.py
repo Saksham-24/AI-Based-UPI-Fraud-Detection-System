@@ -29,7 +29,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-st.markdown("<div class='title'>💳 Paytm UPI Fraud Detection Demo</div>", unsafe_allow_html=True)
+st.markdown("<div class='title'>💳  UPI Fraud Detection Demo</div>", unsafe_allow_html=True)
 st.markdown("---")
 
 
