@@ -120,7 +120,7 @@ with col2:
     fraud_counts = df['Class'].value_counts()
 
     fig, ax = plt.subplots()
-    ax.bar(["Normal", "Fraud"], fraud_counts.values)
+    ax.bar(["Normal ", "Fraud"], fraud_counts.values)
     ax.set_title("Transaction Distribution")
 
     st.pyplot(fig)
