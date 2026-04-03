@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FraudShield AI — UPI Fraud Detection</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg:      #0b0e1a;
+  --bg2:     #111527;
+  --bg3:     #181d2e;
+  --card:    #1c2236;
+  --border:  #252d45;
+  --accent:  #00e5ff;
+  --accent2: #7c3aed;
+  --danger:  #ff4757;
+  --warn:    #ffa502;
+  --safe:    #2ed573;
+  --text:    #e8eaf6;
+  --muted:   #7986cb;
+  --mono:    'Space Mono', monospace;
+  --sans:    'DM Sans', sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+/* ── HEADER ── */
+header{position:relative;z-index:10;padding:20px 40px;border-bottom:1px solid var(--border);background:rgba(11,14,26,.92);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.logo{display:flex;align-items:center;gap:14px}
+.logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.logo-text h1{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase}
+.logo-text p{font-size:11px;color:var(--muted);margin-top:2px}
+.hbadges{display:flex;gap:8px;flex-wrap:wrap}
+.badge{padding:3px 11px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:700;letter-spacing:.05em}
+.badge-b{background:rgba(0,229,255,.1);color:var(--accent);border:1px solid rgba(0,229,255,.25)}
+.badge-p{background:rgba(124,58,237,.14);color:#a78bfa;border:1px solid rgba(124,58,237,.3)}
+.badge-g{background:rgba(46,213,115,.1);color:var(--safe);border:1px solid rgba(46,213,115,.25)}
+
+/* ── TABS ── */
+.tabs{position:relative;z-index:10;display:flex;padding:0 40px;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto}
+.tab{padding:13px 22px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ── MAIN / SECTION ── */
+main{position:relative;z-index:5;padding:28px 40px;max-width:1400px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .35s ease forwards}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px}
+.card-title{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.card-title::before{content:'';display:inline-block;width:3px;height:13px;background:var(--accent);border-radius:2px}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.mb20{margin-bottom:20px}.mb24{margin-bottom:24px}
+
+/* ── STAT CARDS ── */
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 22px}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.stat-val{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--accent)}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,rgba(124,58,237,.14),rgba(0,229,255,.07));border:1px solid rgba(0,229,255,.18);border-radius:16px;padding:28px 36px;margin-bottom:22px;position:relative;overflow:hidden}
+.hero::after{content:'🛡';position:absolute;right:36px;top:50%;transform:translateY(-50%);font-size:72px;opacity:.12}
+.hero h2{font-size:20px;font-weight:700;margin-bottom:7px}
+.hero p{font-size:13px;color:var(--muted);max-width:580px;line-height:1.65}
+
+/* ── TABLES ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:9px 14px;text-align:left;border-bottom:1px solid var(--border)}
+td{padding:11px 14px;border-bottom:1px solid rgba(37,45,69,.45)}
+tr:hover td{background:rgba(0,229,255,.025)}
+.best-row td{color:var(--accent);font-weight:600}
+
+/* ── BAR + FI ── */
+.mbar{display:flex;align-items:center;gap:7px}
+.mbar-bg{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;max-width:70px}
+.mbar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.fi-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.fi-lbl{font-family:var(--mono);font-size:11px;color:var(--muted);width:135px;flex-shrink:0;text-align:right}
+.fi-bg{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.fi-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent2),var(--accent))}
+.fi-v{font-family:var(--mono);font-size:11px;color:var(--accent);width:38px;text-align:right}
+
+/* ── RISK PILLS ── */
+.pill{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;font-family:var(--mono)}
+.pill-low{background:rgba(46,213,115,.14);color:var(--safe)}
+.pill-med{background:rgba(255,165,2,.12);color:var(--warn)}
+.pill-high{background:rgba(255,71,87,.12);color:var(--danger)}
+
+/* ── CONFUSION MATRIX ── */
+.cm{display:grid;grid-template-columns:auto 1fr 1fr;gap:4px;max-width:240px;margin:12px 0}
+.cmlbl{font-size:10px;color:var(--muted);display:flex;align-items:center;justify-content:center;letter-spacing:.04em;text-transform:uppercase}
+.cmcell{padding:11px;border-radius:7px;text-align:center;font-family:var(--mono);font-size:13px;font-weight:700}
+.cmtn{background:rgba(46,213,115,.14);color:var(--safe)}
+.cmfp{background:rgba(255,71,87,.1);color:var(--danger)}
+.cmfn{background:rgba(255,165,2,.1);color:var(--warn)}
+.cmtp{background:rgba(0,229,255,.1);color:var(--accent)}
+
+/* ── DEMO LAYOUT ── */
+.demo-layout{display:grid;grid-template-columns:360px 1fr;gap:22px;align-items:start}
+.fg{margin-bottom:14px}
+.flbl{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;letter-spacing:.03em}
+.finp{width:100%;padding:9px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;font-family:var(--sans);transition:border-color .2s;outline:none}
+.finp:focus{border-color:var(--accent)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+select.finp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237986cb' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
+
+/* toggle */
+.trow{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(37,45,69,.45)}
+.tlbl{font-size:13px;color:var(--text)}.tsub{font-size:11px;color:var(--muted)}
+.toggle{position:relative;width:42px;height:22px;cursor:pointer}
+.toggle input{display:none}
+.ttrack{position:absolute;inset:0;background:var(--border);border-radius:11px;transition:background .2s}
+.toggle input:checked+.ttrack{background:var(--accent2)}
+.tthumb{position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle input:checked~.tthumb{transform:translateX(20px)}
+
+.pbtn{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:10px;color:#fff;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;margin-top:18px;transition:opacity .2s,transform .1s}
+.pbtn:hover{opacity:.9}.pbtn:active{transform:scale(.98)}
+.sbtn{width:100%;padding:8px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:12px;cursor:pointer;margin-top:8px;transition:all .2s}
+.sbtn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* result */
+.result-panel{min-height:360px;display:flex;flex-direction:column;gap:18px}
+.rdisp{text-align:center;padding:32px 20px;border-radius:14px;border:2px solid}
+.rlow{border-color:var(--safe);background:rgba(46,213,115,.05)}
+.rmed{border-color:var(--warn);background:rgba(255,165,2,.05)}
+.rhigh{border-color:var(--danger);background:rgba(255,71,87,.05)}
+.rico{font-size:46px;margin-bottom:10px}
+.rlbl{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px}
+.rscore{font-family:var(--mono);font-size:52px;font-weight:700;line-height:1}
+.rsub{font-size:12px;color:var(--muted);margin-top:5px}
+
+.rbreakdown{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bi{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px}
+.bk{font-size:11px;color:var(--muted);margin-bottom:5px}.bv{font-family:var(--mono);font-size:15px;font-weight:700}
+
+.flist{list-style:none}
+.fi{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(37,45,69,.35);font-size:13px}
+.fdot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.fi-h .fdot{background:var(--danger)}
+.fi-m .fdot{background:var(--warn)}
+.fi-l .fdot{background:var(--safe)}
+
+/* pipeline */
+.pstep{display:flex;gap:18px;align-items:flex-start;padding:18px 0;border-bottom:1px solid var(--border)}
+.pnum{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700;flex-shrink:0}
+.pc h3{font-size:14px;font-weight:600;margin-bottom:5px}
+.pc p{font-size:13px;color:var(--muted);line-height:1.6}
+.stags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.stag{padding:2px 9px;border-radius:20px;font-size:11px;font-family:var(--mono);background:var(--bg2);border:1px solid var(--border);color:var(--muted)}
+
+/* gauge */
+svg.gauge{overflow:visible}
+
+/* scan anim */
+@keyframes scan{0%{top:0}100%{top:100%}}
+.scanning{position:relative;overflow:hidden}
+.scanning::after{content:'';position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scan 1.2s linear infinite;top:0}
+
+/* pulse */
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.1)}}
+.pdot{width:7px;height:7px;border-radius:50%;background:var(--safe);animation:pulse 2s ease-in-out infinite;display:inline-block;margin-right:5px}
+
+@media(max-width:900px){main{padding:16px}header{padding:14px 18px}.tabs{padding:0 16px}.demo-layout{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr}.g2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🛡</div>
+    <div class="logo-text">
+      <h1>FraudShield AI</h1>
+      <p>UPI Fraud Detection System · Saksham Sehrawat</p>
+    </div>
+  </div>
+  <div class="hbadges">
+    <span class="badge badge-b">Sklearn Pipeline</span>
+    <span class="badge badge-p">4 ML Models</span>
+    <span class="badge badge-g"><span class="pdot"></span>Real predict proba</span>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('overview',this)">📊 Overview</div>
+  <div class="tab" onclick="showTab('demo',this)">🔍 Live Detector</div>
+  <div class="tab" onclick="showTab('models',this)">🤖 Model Performance</div>
+  <div class="tab" onclick="showTab('pipeline',this)">⚙️ Pipeline</div>
+  <div class="tab" onclick="showTab('history',this)">📋 Transaction Log</div>
+</div>
+
+<main>
+
+<!-- ═══════════ OVERVIEW ═══════════ -->
+<section id="overview" class="section active fade-up">
+  <div class="hero">
+    <h2>AI-Based UPI Fraud Detection System</h2>
+    <p>A real scikit-learn ML pipeline — trained on 10,000 synthetic PaySim-style transactions — that analyses transaction behaviour and returns a fraud probability via <code style="color:var(--accent);font-family:var(--mono)">predict_proba()</code>.</p>
+  </div>
+
+  <div class="g4 mb24">
+    <div class="stat"><div class="stat-lbl">Dataset</div><div class="stat-val">10K</div><div class="stat-sub">Simulated UPI transactions</div></div>
+    <div class="stat"><div class="stat-lbl">Best Accuracy</div><div class="stat-val" id="ov-acc">–</div><div class="stat-sub">Random Forest</div></div>
+    <div class="stat"><div class="stat-lbl">Best AUC-ROC</div><div class="stat-val" id="ov-auc">–</div><div class="stat-sub">Random Forest</div></div>
+    <div class="stat"><div class="stat-lbl">Models Trained</div><div class="stat-val">4</div><div class="stat-sub">LR · DT · RF · GBM</div></div>
+  </div>
+
+  <div class="g2 mb24">
+    <div class="card">
+      <div class="card-title">Feature Importance — Random Forest</div>
+      <div id="fi-chart"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Accuracy vs AUC — All Models</div>
+      <div id="acc-chart"></div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="card-title">Risk Score Thresholds</div>
+      <div style="margin-top:6px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px"><span class="pill pill-low">LOW</span><span style="font-size:13px;color:var(--muted)">0.00 – 0.35 · Safe to proceed</span></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px"><span class="pill pill-med">MEDIUM</span><span style="font-size:13px;color:var(--muted)">0.36 – 0.65 · Needs review</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="pill pill-high">HIGH</span><span style="font-size:13px;color:var(--muted)">0.66 – 1.00 · Block & alert</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">How Scoring Works</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7">Each transaction is passed as a 10-feature vector to the selected sklearn model. <code style="color:var(--accent);font-family:var(--mono)">predict_proba(X)[0,1]</code> returns the exact fraud probability — no approximation, no manual weights. The Random Forest aggregates 100 decision trees; each tree votes and the averaged probability becomes the fraud risk score.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Project Team</div>
+      <div style="font-size:13px;line-height:2">
+        👤 Saksham Sehrawat — 2301730235<br>
+        👤 Deepak Thapliyal — 2301730212<br>
+        👤 Dhairya Jashoria — 2301730241<br>
+        👤 Shikhar Bajpai — 2301730270<br>
+        <span style="font-size:12px;color:var(--muted)">Supervisor: <span style="color:var(--accent)">Ms. Neha Kaushik</span> · K.R. Mangalam University</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ LIVE DEMO ═══════════ -->
+<section id="demo" class="section">
+  <div class="demo-layout">
+
+    <!-- form -->
+    <div class="card">
+      <div class="card-title">Transaction Input</div>
+
+      <div class="fg">
+        <label class="flbl">Transaction Amount (₹)</label>
+        <input class="finp" type="number" id="i-amount" value="5000" min="1">
+      </div>
+      <div class="frow mb20" style="margin-bottom:13px">
+        <div class="fg" style="margin-bottom:0">
+          <label class="flbl">Hour of Day (0–23)</label>
+          <input class="finp" type="number" id="i-hour" value="14" min="0" max="23">
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <label class="flbl">Freq in Last Hour</label>
+          <input class="finp" type="number" id="i-f1h" value="1" min="0" max="20">
+        </div>
+      </div>
+      <div class="frow" style="margin-bottom:13px">
+        <div class="fg" style="margin-bottom:0">
+          <label class="flbl">Freq in Last 24h</label>
+          <input class="finp" type="number" id="i-f24h" value="4" min="0" max="100">
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <label class="flbl">User Avg Spend (₹)</label>
+          <input class="finp" type="number" id="i-avg" value="3500" min="1">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="flbl">ML Model</label>
+        <select class="finp" id="i-model">
+          <option value="Random Forest">Random Forest (Recommended)</option>
+          <option value="Gradient Boosting">Gradient Boosting</option>
+          <option value="Decision Tree">Decision Tree</option>
+          <option value="Logistic Regression">Logistic Regression</option>
+          <option value="Ensemble (All Models)">Ensemble (All Models)</option>
+        </select>
+      </div>
+
+      <div style="border-top:1px solid var(--border);padding-top:13px;margin-top:4px">
+        <div class="trow">
+          <div><div class="tlbl">New Device</div><div class="tsub">First txn from this device</div></div>
+          <label class="toggle"><input type="checkbox" id="i-dev"><div class="ttrack"></div><div class="tthumb"></div></label>
+        </div>
+        <div class="trow">
+          <div><div class="tlbl">New Merchant</div><div class="tsub">Unrecognised payee</div></div>
+          <label class="toggle"><input type="checkbox" id="i-mer"><div class="ttrack"></div><div class="tthumb"></div></label>
+        </div>
+        <div class="trow">
+          <div><div class="tlbl">Weekend</div><div class="tsub">Saturday or Sunday</div></div>
+          <label class="toggle"><input type="checkbox" id="i-wk"><div class="ttrack"></div><div class="tthumb"></div></label>
+        </div>
+      </div>
+
+      <button class="pbtn" onclick="runPredict()">⚡ Analyse Transaction</button>
+      <button class="sbtn" onclick="loadSample('normal')">Load Normal Sample</button>
+      <button class="sbtn" onclick="loadSample('suspicious')">Load Suspicious Sample</button>
+      <button class="sbtn" onclick="loadSample('fraud')">Load High-Risk Sample</button>
+    </div>
+
+    <!-- result -->
+    <div class="result-panel" id="result-panel">
+      <div class="card" style="text-align:center;padding:56px;color:var(--muted)">
+        <div style="font-size:44px;margin-bottom:14px">🔍</div>
+        <div style="font-size:15px;margin-bottom:7px">Ready to Analyse</div>
+        <div style="font-size:13px">Fill transaction details and click<br><strong style="color:var(--accent)">Analyse Transaction</strong><br>to get a real <code style="font-family:var(--mono)">predict_proba()</code> score.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════ MODELS ═══════════ -->
+<section id="models" class="section">
+  <div class="card mb24">
+    <div class="card-title">Model Performance Comparison</div>
+    <div class="tbl-wrap">
+      <table id="model-table">
+        <thead><tr><th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>AUC-ROC</th><th>Status</th></tr></thead>
+        <tbody id="model-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Random Forest — Confusion Matrix</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Test set (20% hold-out, balanced dataset)</div>
+      <div class="cm" id="rf-cm"></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px;line-height:1.9">
+        <span style="color:var(--safe)">■</span> TN: correctly safe &nbsp;
+        <span style="color:var(--danger)">■</span> FP: false alarms<br>
+        <span style="color:var(--warn)">■</span> FN: missed fraud &nbsp;
+        <span style="color:var(--accent)">■</span> TP: caught fraud
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Why Random Forest Wins</div>
+      <p style="font-size:13px;color:var(--muted);line-height:1.75;margin-top:6px">
+        Random Forest aggregates <strong style="color:var(--text)">100 decision trees</strong>, each trained on a random feature/sample subset. The final <code style="color:var(--accent);font-family:var(--mono)">predict_proba</code> is the average probability across all trees — this averaging <strong style="color:var(--text)">reduces variance</strong> and prevents the overfitting seen in a single Decision Tree.<br><br>
+        Its <strong style="color:var(--text)">high precision (~90%)</strong> means very few legitimate transactions are wrongly blocked, while an <strong style="color:var(--text)">AUC of ~78%</strong> shows strong rank-order discrimination between fraud and genuine transactions across all classification thresholds.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ PIPELINE ═══════════ -->
+<section id="pipeline" class="section">
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">ML Pipeline Steps</div>
+      <div>
+        <div class="pstep"><div class="pnum">1</div><div class="pc"><h3>Data Collection</h3><p>10,000 row PaySim-style dataset generated with NumPy using realistic UPI transaction distributions (amount, time, frequency, flags).</p><div class="stags"><span class="stag">PaySim-style</span><span class="stag">NumPy</span><span class="stag">10K rows</span></div></div></div>
+        <div class="pstep"><div class="pnum">2</div><div class="pc"><h3>Preprocessing</h3><p>Class imbalance corrected with upsampling (≈SMOTE). Categorical encoding, StandardScaler normalisation for LR, 80/20 stratified split.</p><div class="stags"><span class="stag">StandardScaler</span><span class="stag">Upsampling</span><span class="stag">Stratified Split</span></div></div></div>
+        <div class="pstep"><div class="pnum">3</div><div class="pc"><h3>Feature Engineering</h3><p>10 behavioural features: spend deviation, frequency windows (1h/24h), night flag, device & merchant novelty signals, weekend flag.</p><div class="stags"><span class="stag">Spend Deviation</span><span class="stag">Night Flag</span><span class="stag">Freq Windows</span></div></div></div>
+        <div class="pstep"><div class="pnum">4</div><div class="pc"><h3>Model Training</h3><p>Four sklearn classifiers trained and compared. LR uses scaled features; tree-based models use raw features. All serialised with pickle.</p><div class="stags"><span class="stag">LR</span><span class="stag">DT max_depth=8</span><span class="stag">RF n=100</span><span class="stag">GBM n=100</span></div></div></div>
+        <div class="pstep"><div class="pnum">5</div><div class="pc"><h3>Risk Scoring</h3><p><code style="color:var(--accent);font-family:var(--mono)">predict_proba(X)[0,1]</code> gives exact fraud probability. Classified into Low/Medium/High risk tiers for graded decision-making.</p><div class="stags"><span class="stag">predict_proba</span><span class="stag">3 Tiers</span><span class="stag">0–1 Score</span></div></div></div>
+        <div class="pstep" style="border:none"><div class="pnum">6</div><div class="pc"><h3>Evaluation</h3><p>Accuracy, Precision, Recall, F1-Score, AUC-ROC, Confusion Matrix per model. Feature importance from RF for explainability.</p><div class="stags"><span class="stag">AUC-ROC</span><span class="stag">Confusion Matrix</span><span class="stag">F1</span><span class="stag">Feature Importance</span></div></div></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card mb20">
+        <div class="card-title">Features & Importances</div>
+        <table>
+          <thead><tr><th>Feature</th><th>Type</th><th>RF Importance</th></tr></thead>
+          <tbody id="feat-table"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">Tech Stack</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px"><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Language</div><div style="font-size:13px;font-weight:600">Python 3.x</div></div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px"><div style="font-size:11px;color:var(--muted);margin-bottom:3px">ML</div><div style="font-size:13px;font-weight:600">Scikit-Learn 1.8</div></div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px"><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Data</div><div style="font-size:13px;font-weight:600">Pandas + NumPy</div></div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px"><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Server</div><div style="font-size:13px;font-weight:600">Python http.server</div></div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px"><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Dataset</div><div style="font-size:13px;font-weight:600">PaySim Synthetic</div></div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px"><div style="font-size:11px;color:var(--muted);margin-bottom:3px">Next: XGBoost</div><div style="font-size:13px;font-weight:600;color:var(--warn)">In Progress</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ HISTORY ═══════════ -->
+<section id="history" class="section">
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between;flex-direction:row">
+      <span>Transaction Log</span>
+      <button onclick="clearLog()" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:3px 11px;border-radius:6px;font-size:11px;cursor:pointer">Clear</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Amount</th><th>Hour</th><th>Freq/h</th><th>Avg Spend</th><th>New Dev</th><th>Night</th><th>Model</th><th>Score</th><th>Risk</th></tr></thead>
+        <tbody id="log-body"><tr><td colspan="10" style="text-align:center;color:var(--muted);padding:36px">No transactions analysed yet — use the Live Detector tab.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ── injected by Python server ────────────────────────────────
+const MODEL_RESULTS       = __MODEL_RESULTS__;
+const FEATURE_IMPORTANCE  = __FEATURE_IMPORTANCE__;
+
+// ── state ────────────────────────────────────────────────────
+let txnLog = [], txnId = 0;
+
+// ────────────────────────────────────────────────────────────
+// TABS
+// ────────────────────────────────────────────────────────────
+function showTab(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active','fade-up');
+  el.classList.add('active');
+}
+
+// ────────────────────────────────────────────────────────────
+// CHARTS
+// ────────────────────────────────────────────────────────────
+function renderFI() {
+  const sorted = Object.entries(FEATURE_IMPORTANCE).sort((a,b)=>a[1]-b[1]);
+  const maxV = Math.max(...sorted.map(x=>x[1]));
+  document.getElementById('fi-chart').innerHTML = sorted.map(([k,v])=>`
+    <div class="fi-row">
+      <div class="fi-lbl">${k}</div>
+      <div class="fi-bg"><div class="fi-fill" style="width:${(v/maxV)*100}%"></div></div>
+      <div class="fi-v">${(v*100).toFixed(1)}%</div>
+    </div>`).join('');
+}
+
+function renderAccChart() {
+  const names = Object.keys(MODEL_RESULTS);
+  const colors = ['#7986cb','#a78bfa','#00e5ff','#7c3aed'];
+  const maxH = 130;
+  const maxAcc = Math.max(...names.map(n=>MODEL_RESULTS[n].accuracy));
+  document.getElementById('acc-chart').innerHTML = `
+    <div style="display:flex;align-items:flex-end;gap:14px;height:${maxH+38}px;padding-top:8px">
+      ${names.map((n,i)=>{
+        const r=MODEL_RESULTS[n], c=colors[i];
+        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="font-family:var(--mono);font-size:9px;color:${c}">${r.accuracy}%</div>
+          <div style="width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,${c}55,${c}11);border:1px solid ${c}44;height:${(r.accuracy/maxAcc)*maxH}px"></div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">${n.split(' ')[0]}</div>
+          <div style="font-size:9px;color:var(--muted)">AUC ${r.auc}%</div>
+        </div>`;}).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">Accuracy vs AUC — RF leads both metrics</div>`;
+}
+
+function renderModelTable() {
+  const order = ['Logistic Regression','Decision Tree','Random Forest','Gradient Boosting'];
+  document.getElementById('model-tbody').innerHTML = order.map(n=>{
+    const r = MODEL_RESULTS[n];
+    const best = n === 'Random Forest';
+    return `<tr class="${best?'best-row':''}">
+      <td>${best?'⭐ ':''}<strong>${n}</strong></td>
+      <td><div class="mbar"><div class="mbar-bg"><div class="mbar-fill" style="width:${r.accuracy}%"></div></div>${r.accuracy}%</div></td>
+      <td>${r.precision}%</td><td>${r.recall}%</td><td>${r.f1}%</td><td>${r.auc}%</td>
+      <td><span class="pill ${best?'pill-low':n==='Gradient Boosting'?'pill-med':'pill-med'}">${best?'Best Model':'Baseline'}</span></td>
+    </tr>`;}).join('');
+
+  // RF confusion matrix
+  const rf = MODEL_RESULTS['Random Forest'];
+  if (rf && rf.cm) {
+    const [[tn,fp],[fn,tp]] = rf.cm;
+    document.getElementById('rf-cm').innerHTML = `
+      <div></div><div class="cmlbl">Pred: Legit</div><div class="cmlbl">Pred: Fraud</div>
+      <div class="cmlbl" style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;padding:3px">Actual: Legit</div>
+      <div class="cmcell cmtn">${tn.toLocaleString()}</div><div class="cmcell cmfp">${fp.toLocaleString()}</div>
+      <div class="cmlbl" style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;padding:3px">Actual: Fraud</div>
+      <div class="cmcell cmfn">${fn.toLocaleString()}</div><div class="cmcell cmtp">${tp.toLocaleString()}</div>`;
+  }
+}
+
+function renderFeatTable() {
+  const feats = [
+    {n:'spend_deviation',t:'Behavioural'},
+    {n:'amount',t:'Transaction'},
+    {n:'avg_spend',t:'Behavioural'},
+    {n:'hour',t:'Temporal'},
+    {n:'freq_24h',t:'Behavioural'},
+    {n:'freq_1h',t:'Behavioural'},
+    {n:'weekend',t:'Temporal'},
+    {n:'new_merchant',t:'Context'},
+    {n:'new_device',t:'Context'},
+    {n:'night_txn',t:'Temporal'},
+  ];
+  document.getElementById('feat-table').innerHTML = feats.map(f=>`
+    <tr><td style="font-family:var(--mono);font-size:12px">${f.n}</td>
+    <td style="color:var(--muted);font-size:12px">${f.t}</td>
+    <td style="color:var(--accent);font-family:var(--mono);font-size:12px">${((FEATURE_IMPORTANCE[f.n]||0)*100).toFixed(1)}%</td></tr>`).join('');
+}
+
+function renderOverviewStats() {
+  const rf = MODEL_RESULTS['Random Forest'];
+  if (rf) {
+    document.getElementById('ov-acc').textContent = rf.accuracy + '%';
+    document.getElementById('ov-auc').textContent = rf.auc + '%';
+  }
+}
+
+
+async function runPredict() {
+  const payload = {
+    amount:       parseFloat(document.getElementById('i-amount').value) || 1000,
+    hour:         parseInt(document.getElementById('i-hour').value) || 12,
+    freq_1h:      parseInt(document.getElementById('i-f1h').value)  || 1,
+    freq_24h:     parseInt(document.getElementById('i-f24h').value) || 4,
+    avg_spend:    parseFloat(document.getElementById('i-avg').value) || 3000,
+    new_device:   document.getElementById('i-dev').checked ? 1 : 0,
+    new_merchant: document.getElementById('i-mer').checked ? 1 : 0,
+    weekend:      document.getElementById('i-wk').checked  ? 1 : 0,
+    model:        document.getElementById('i-model').value,
+  };
+
+  const panel = document.getElementById('result-panel');
+  panel.innerHTML = `<div class="card scanning" style="padding:40px;text-align:center">
+    <div style="font-size:13px;color:var(--accent);font-family:var(--mono)">RUNNING predict_proba() …</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">calling sklearn ${payload.model}</div>
+  </div>`;
+
+  try {
+    const res  = await fetch('/predict', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderResult(data, payload);
+    addToLog(payload, data);
+  } catch (err) {
+    panel.innerHTML = `<div class="card" style="padding:32px;text-align:center;color:var(--danger)">
+      ⚠️ Error: ${err.message}
+    </div>`;
+  }
+}
+
+function renderResult(d, p) {
+  const rClass  = {LOW:'rlow', MEDIUM:'rmed', HIGH:'rhigh'}[d.risk];
+  const rColor  = {LOW:'var(--safe)', MEDIUM:'var(--warn)', HIGH:'var(--danger)'}[d.risk];
+  const rIcon   = {LOW:'✅', MEDIUM:'⚠️', HIGH:'🚨'}[d.risk];
+  const verdict = {LOW:'Transaction Appears Safe', MEDIUM:'Requires Manual Review', HIGH:'BLOCK — Likely Fraud'}[d.risk];
+
+  const frac  = d.prob / 100;
+  const angle = frac * 180 - 90;
+  const rad   = angle * Math.PI / 180;
+  const cx=90, cy=80, r=65;
+  const nx = cx + r*Math.cos(rad), ny = cy + r*Math.sin(rad);
+  const arc  = 204;
+  const dash = frac * arc;
+
+  document.getElementById('result-panel').innerHTML = `
+    <div class="rdisp ${rClass} fade-up">
+      <div class="rico">${rIcon}</div>
+      <div class="rlbl">Fraud Risk Score — ${d.model_used}</div>
+      <div class="rscore" style="color:${rColor}">${d.prob}%</div>
+      <div class="rsub">${verdict}</div>
+      <div style="margin-top:18px">
+        <svg class="gauge" width="180" height="95" viewBox="0 0 180 95">
+          <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="var(--safe)"/>
+            <stop offset="50%" stop-color="var(--warn)"/>
+            <stop offset="100%" stop-color="var(--danger)"/>
+          </linearGradient></defs>
+          <path d="M25 80 A65 65 0 0 1 155 80" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="10" stroke-linecap="round"/>
+          <path d="M25 80 A65 65 0 0 1 155 80" fill="none" stroke="url(#gg)" stroke-width="10" stroke-linecap="round"
+                stroke-dasharray="${arc}" stroke-dashoffset="${arc - dash}"/>
+          <line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="${rColor}" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="${cx}" cy="${cy}" r="6" fill="${rColor}"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="rbreakdown fade-up">
+      <div class="bi"><div class="bk">Amount</div><div class="bv" style="color:var(--accent)">₹${p.amount.toLocaleString()}</div></div>
+      <div class="bi"><div class="bk">Spend Deviation</div>
+        <div class="bv" style="color:${Math.abs(d.spend_dev_pct)>100?'var(--danger)':'var(--text)'}">
+          ${d.spend_dev_pct>0?'+':''}${d.spend_dev_pct}%</div></div>
+      <div class="bi"><div class="bk">Frequency</div>
+        <div class="bv" style="color:${p.freq_1h>3?'var(--warn)':'var(--text)'}">${p.freq_1h}/hr · ${p.freq_24h}/day</div></div>
+      <div class="bi"><div class="bk">Context</div>
+        <div class="bv" style="font-size:13px">${[p.new_device?'New Dev':'',d.night_txn?'Night':'',p.new_merchant?'New Merch':''].filter(Boolean).join(' · ')||'None'}</div></div>
+    </div>
+
+    <div class="card fade-up">
+      <div class="card-title">Risk Factor Analysis</div>
+      <ul class="flist">
+        ${d.factors.map(([lvl,txt])=>`
+          <li class="fi fi-${lvl[0]}">
+            <div class="fdot"></div>${txt}
+          </li>`).join('')}
+      </ul>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)">
+        Model: <span style="color:var(--accent)">${d.model_used}</span> ·
+        Method: <code style="font-family:var(--mono);color:var(--text)">predict_proba(X)[0,1]</code> ·
+        Threshold: <span style="color:var(--text)">0.35 / 0.65</span>
+      </div>
+    </div>`;
+}
+
+// ────────────────────────────────────────────────────────────
+// SAMPLE LOADERS
+// ────────────────────────────────────────────────────────────
+const SAMPLES = {
+  normal:     { amount:350,    hour:13, f1h:1, f24h:3,  avg:400,  dev:false, mer:false, wk:false },
+  suspicious: { amount:18000,  hour:22, f1h:3, f24h:12, avg:3000, dev:true,  mer:true,  wk:false },
+  fraud:      { amount:150000, hour:2,  f1h:7, f24h:25, avg:2500, dev:true,  mer:true,  wk:false },
+};
+function loadSample(t) {
+  const s = SAMPLES[t];
+  document.getElementById('i-amount').value = s.amount;
+  document.getElementById('i-hour').value   = s.hour;
+  document.getElementById('i-f1h').value    = s.f1h;
+  document.getElementById('i-f24h').value   = s.f24h;
+  document.getElementById('i-avg').value    = s.avg;
+  document.getElementById('i-dev').checked  = s.dev;
+  document.getElementById('i-mer').checked  = s.mer;
+  document.getElementById('i-wk').checked   = s.wk;
+}
+
+// ────────────────────────────────────────────────────────────
+// LOG
+// ────────────────────────────────────────────────────────────
+function addToLog(p, d) {
+  txnId++;
+  txnLog.unshift({ id:txnId, ...p, ...d });
+  const pc = {LOW:'pill-low', MEDIUM:'pill-med', HIGH:'pill-high'};
+  document.getElementById('log-body').innerHTML =
+    txnLog.slice(0,30).map(t=>`<tr>
+      <td style="color:var(--muted);font-family:var(--mono)">#${t.id}</td>
+      <td>₹${t.amount.toLocaleString()}</td>
+      <td>${t.hour}:00</td>
+      <td>${t.freq_1h}/hr</td>
+      <td>₹${t.avg_spend.toLocaleString()}</td>
+      <td>${t.new_device?'⚠️ Yes':'No'}</td>
+      <td>${t.night_txn?'🌙 Yes':'No'}</td>
+      <td style="font-family:var(--mono);font-size:11px">${t.model.split(' ')[0]}</td>
+      <td style="font-family:var(--mono)">${t.prob}%</td>
+      <td><span class="pill ${pc[t.risk]}">${t.risk}</span></td>
+    </tr>`).join('');
+}
+
+function clearLog() { txnLog=[]; txnId=0; document.getElementById('log-body').innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:36px">No transactions analysed yet.</td></tr>'; }
+
+// ────────────────────────────────────────────────────────────
+// INIT
+// ────────────────────────────────────────────────────────────
+window.onload = () => {
+  renderFI();
+  renderAccChart();
+  renderModelTable();
+  renderFeatTable();
+  renderOverviewStats();
+};
+</script>
+</body>
+</html>
