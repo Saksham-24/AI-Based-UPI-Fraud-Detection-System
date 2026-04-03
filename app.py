@@ -1,135 +1,118 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-from sklearn.ensemble import RandomForestClassifier
-import matplotlib.pyplot as plt
+import json
+import os
+import sys
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse
 
+# ── ensure pipeline is on path ──────────────────────────────
+sys.path.insert(0, os.path.dirname(__file__))
+from pipeline import load_artifacts, predict_transaction, generate_dataset, preprocess, train_models, evaluate_models, get_feature_importance, save_artifacts, MODEL_DIR
 
-st.set_page_config(page_title="UPI Fraud Detection", layout="wide")
+# ── load (or train) artifacts ────────────────────────────────
+MODEL_PKL = os.path.join(MODEL_DIR, 'models.pkl')
+if not os.path.exists(MODEL_PKL):
+    print("[!] No saved models found — training now …")
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    df = generate_dataset(10_000)
+    df.to_csv(os.path.join(MODEL_DIR, 'dataset.csv'), index=False)
+    X_train, X_test, y_train, y_test, X_train_s, X_test_s, scaler = preprocess(df)
+    trained = train_models(X_train, y_train, X_train_s)
+    results = evaluate_models(trained, X_test, y_test, X_test_s)
+    fi = get_feature_importance(trained)
+    save_artifacts(trained, scaler, results, fi)
 
+MODELS, SCALER, META = load_artifacts()
+print(f"[✓] Models loaded: {list(MODELS.keys())}")
 
-st.markdown("""
-    <style>
-    .main {
-        background-color: #0f172a;
-        color: white;
-    }
-    .card {
-        background-color: #1e293b;
-        padding: 20px;
-        border-radius: 15px;
-        margin-bottom: 15px;
-    }
-    .title {
-        font-size: 32px;
-        font-weight: bold;
-        color: #00baf2;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# ── read the HTML template ───────────────────────────────────
+HTML_PATH = os.path.join(os.path.dirname(__file__), 'templates', 'index.html')
+with open(HTML_PATH, 'r', encoding='utf-8') as f:
+    HTML_TEMPLATE = f.read()
 
+# ── inject model metadata into page ─────────────────────────
+RESULTS_JS = json.dumps(META['model_results'])
+FI_JS = json.dumps(META['feature_importance'])
 
-st.markdown("<div class='title'>💳  UPI Fraud Detection Demo</div>", unsafe_allow_html=True)
-st.markdown("---")
+HTML_PAGE = (HTML_TEMPLATE
+             .replace('__MODEL_RESULTS__', RESULTS_JS)
+             .replace('__FEATURE_IMPORTANCE__', FI_JS))
 
+# ════════════════════════════════════════════════════════════════
+class Handler(BaseHTTPRequestHandler):
 
-df = pd.DataFrame(np.random.rand(1000, 30), columns=[f"V{i}" for i in range(30)])
-df["Class"] = np.random.randint(0, 2, 1000)
-X = df.drop('Class', axis=1)
-y = df['Class']
+    def log_message(self, fmt, *args):
+        pass
 
-
-model = RandomForestClassifier(n_estimators=80)
-model.fit(X, y)
-
-
-col1, col2 = st.columns([2, 1])
-
-
-with col1:
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.subheader("📲 Send Money")
-
-    name = st.text_input("Recipient Name", "Rahul Sharma")
-    upi = st.text_input("UPI ID", "rahul@paytm")
-    amount = st.number_input("Amount (₹)", 1, 100000, 500)
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.subheader("⚙️ Transaction Behaviour")
-
-    txn_count = st.slider("Transactions in last hour", 0, 20, 2)
-    new_device = st.checkbox("New Device Login")
-    night = st.checkbox("Late Night Transaction")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    if st.button("🚀 Pay Now"):
-
-        
-        features = list(np.zeros(28))
-        input_data = [50000] + features + [amount]
-        input_array = np.array(input_data).reshape(1, -1)
-
-        prob = model.predict_proba(input_array)[0][1]
-
-        
-        risk_score = prob
-        if txn_count > 10:
-            risk_score += 0.2
-        if new_device:
-            risk_score += 0.2
-        if night:
-            risk_score += 0.1
-        if amount > 50000:
-            risk_score += 0.2
-
-        risk_score = min(risk_score, 1)
-
-        
-        if risk_score < 0.3:
-            level = "🟢 LOW Risk"
-        elif risk_score < 0.7:
-            level = "🟡 MEDIUM"
+    def do_GET(self):
+        parsed = urlparse(self.path)
+        if parsed.path in ('/', '/index.html'):
+            self._send(200, 'text/html', HTML_PAGE.encode())
         else:
-            level = "🔴 HIGH"
+            self._send(404, 'text/plain', b'Not found')
 
-        st.markdown("<div class='card'>", unsafe_allow_html=True)
+    def do_POST(self):
+        parsed = urlparse(self.path)
 
-        st.subheader("🔍 Transaction Result")
-        st.write(f"Fraud Probability: **{prob:.2f}**")
-        st.write(f"Risk Score: **{risk_score:.2f}**")
-        st.write(f"Risk Level: {level}")
+        if parsed.path == '/predict':
+            length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(length)
 
-        if risk_score > 0.7 :
-            st.error("🚨 Payment Blocked: High Risk")
-        elif risk_score > 0.3:
-            st.warning("⚠️ Payment Pending Verification")
+            try:
+                data = json.loads(body)
+
+                txn = {
+                    'amount': float(data.get('amount', 1000)),
+                    'hour': int(data.get('hour', 12)),
+                    'freq_1h': int(data.get('freq_1h', 1)),
+                    'freq_24h': int(data.get('freq_24h', 4)),
+                    'avg_spend': float(data.get('avg_spend', 3000)),
+                    'new_device': int(data.get('new_device', 0)),
+                    'new_merchant': int(data.get('new_merchant', 0)),
+                    'weekend': int(data.get('weekend', 0)),
+                }
+
+                model_name = data.get('model', 'Random Forest')
+
+                prob, risk, factors = predict_transaction(
+                    MODELS, SCALER, txn, model_name
+                )
+
+                resp = {
+                    'prob': round(prob * 100, 2),
+                    'risk': risk,
+                    'factors': factors,
+                    'model_used': model_name,
+                }
+
+                self._send(200, 'application/json', json.dumps(resp).encode())
+
+            except Exception as e:
+                self._send(500, 'application/json',
+                           json.dumps({'error': str(e)}).encode())
         else:
-            st.success("✅ Payment Successful")
+            self._send(404, 'text/plain', b'Not found')
 
-        st.markdown("</div>" , unsafe_allow_html=True)
+    def _send(self, code, ctype, body: bytes):
+        self.send_response(code)
+        self.send_header('Content-Type', ctype)
+        self.send_header('Content-Length', str(len(body)))
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+        self.wfile.write(body)
 
+# ════════════════════════════════════════════════════════════════
+if __name__ == '__main__':
+    PORT = 8000
+    server = HTTPServer(('', PORT), Handler)
 
-with col2:
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.subheader("📊 Fraud Insights")
+    print(f"\n{'='*50}")
+    print(f"  FraudShield AI — UPI Fraud Detection System")
+    print(f"{'='*50}")
+    print(f"  Server running at http://localhost:{PORT}")
+    print(f"  Models loaded: {len(MODELS)}")
+    print(f"  Press Ctrl+C to stop\n")
 
-    
-    fraud_counts = df['Class'].value_counts()
-
-    fig, ax = plt.subplots()
-    ax.bar(["Normal ", "Fraud"], fraud_counts.values)
-    ax.set_title("Transaction Distribution")
-
-    st.pyplot(fig)
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='card'>", unsafe_allow_html=True)
-    st.write("💡 AI + Behavioural Analysis")
-    st.write("• Detects unusual patterns")
-    st.write("• Prevents fraud in real-time")
-    st.write("• Learns from past transactions")
-    st.markdown("</div>", unsafe_allow_html=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\n[✓] Server stopped.")
