@@ -24,8 +24,8 @@ India processes **10 billion+ UPI transactions every month**. The moment a fraud
 
 **The core issue with existing systems:**
 - ❌ Fixed rules that fraudsters easily learn to bypass
-- ❌ Binary outputs — no risk scoring, just allow/block
-- ❌ High false positive rates — blocking legitimate users
+- ❌ Binary outputs  no risk scoring, just allow/block
+- ❌ High false positive rates  blocking legitimate users
 - ❌ No adaptability to new and evolving fraud patterns
 - ❌ No behavioural understanding of individual users
 
